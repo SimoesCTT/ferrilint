@@ -7,7 +7,6 @@ use spec_lex_rs::{SpecParser, MacroContext};
 fn main() {
     println!("\x1b[1;32m[ferrilint-bench]\x1b[0m Starting high-precision benchmark suite...");
 
-    // 1. Benchmark RPM Header / Lead Parsing
     let dummy_lead_data = vec![
         0xed, 0xab, 0xee, 0xdb, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
         0x00, 0x01, 0x00, 0x00, 0x66, 0x65, 0x72, 0x72, 0x69, 0x6c, 0x69, 0x6e,
@@ -28,8 +27,7 @@ fn main() {
     let ops_per_sec = iterations as f64 / duration.as_secs_f64();
     println!("  [BENCH] RPM Lead Parse: {:.2} ops/sec ({:?})", ops_per_sec, duration);
 
-    // 2. Benchmark Spec Lexing & Macro Expansion
-    let dummy_spec = r#"
+    let dummy_spec = "
         %global debug_package %{nil}
         Name:           ferrilint
         Version:        0.1.0
@@ -41,7 +39,7 @@ fn main() {
 
         %description
         A lightning-fast static analysis engine.
-    "";
+    ";
 
     let spec_iterations = 100_000;
     let start_spec = Instant::now();

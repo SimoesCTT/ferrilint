@@ -9,8 +9,8 @@ license.workspace = true
 rpm-parse-rs = { path = "../rpm-parse-rs" }
 elf-inspect-rs = { path = "../elf-inspect-rs" }
 spec-lex-rs = { path = "../spec-lex-rs" }
-clap = { workspace = true, features = ["derive"] }
-clap_complete = "4.5"
-rayon = { workspace = true }
-walkdir = { workspace = true }
-regex = { workspace = true }
+clap.workspace = true
+clap_complete.workspace = true
+rayon.workspace = true
+walkdir.workspace = true
+regex.workspace = true

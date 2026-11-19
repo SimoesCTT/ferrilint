@@ -1,7 +1,6 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-tr-error: #[error("SPDX license validation error: {0}")]
 pub enum SpecError {
     #[error("SPDX license validation error: {0}")]
     InvalidLicense(String),

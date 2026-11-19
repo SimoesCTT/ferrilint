@@ -6,6 +6,4 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-nom.workspace = true
-scroll.workspace = true
 thiserror.workspace = true

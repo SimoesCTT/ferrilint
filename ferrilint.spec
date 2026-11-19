@@ -12,7 +12,16 @@ Source0:        %{url}/archive/refs/tags/%{name}-%{version}.tar.gz
 BuildRequires:  cargo
 BuildRequires:  rust
 BuildRequires:  rust-packaging >= 24
-BuildRequires:  rustfmt
+BuildRequires:  crate(anstream) >= 0.6
+BuildRequires:  crate(clap) >= 4.5
+BuildRequires:  crate(clap_complete) >= 4.5
+BuildRequires:  crate(rayon) >= 1.10
+BuildRequires:  crate(regex) >= 1.11
+BuildRequires:  crate(serde) >= 1.0
+BuildRequires:  crate(spdx) >= 0.10
+BuildRequires:  crate(thiserror) >= 2.0
+BuildRequires:  crate(toml) >= 0.8
+BuildRequires:  crate(walkdir) >= 2.5
 
 %description
 A lightning-fast, drop-in static analysis engine and package inspection suite 

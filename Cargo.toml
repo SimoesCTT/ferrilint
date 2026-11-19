@@ -15,11 +15,13 @@ authors = ["A. Simões <simoesctt@github>"]
 license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
-nom = "8.0"
-scroll = "0.12"
 thiserror = "2.0"
 anstream = "0.6"
 clap = { version = "4.5", features = ["derive"] }
+clap_complete = "4.5"
 rayon = "1.10"
 spdx = "0.10"
 walkdir = "2.5"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
+regex = "1.11"

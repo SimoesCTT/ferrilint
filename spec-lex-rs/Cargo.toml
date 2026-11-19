@@ -6,5 +6,5 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-spdx.workspace = true
 thiserror.workspace = true
+spdx = "0.13"

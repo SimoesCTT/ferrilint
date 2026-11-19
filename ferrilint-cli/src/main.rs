@@ -10,7 +10,6 @@ use walkdir::WalkDir;
 use profile::{AuditPolicy, LintProfile};
 use rpm_parse_rs::{RpmLead, CpioArchive};
 use elf_inspect_rs::ElfInspector;
-use spec_lex_rs::{SpecParser, MacroContext};
 
 #[derive(Parser)]
 #[command(name = "ferrilint", version, about = "Lightning-fast native RPM linter in pure Rust")]
@@ -21,7 +20,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Recursively scan and lint .spec files or RPM packages using Rayon parallel iterators
+    /// Recursively scan and lint RPM packages using Rayon parallel iterators
     Lint {
         /// Path to file or directory to scan
         path: PathBuf,
@@ -71,7 +70,7 @@ fn run_lint(path: &PathBuf, profile: LintProfile) -> Result<(), Box<dyn std::err
         .map(|e| e.path().to_path_buf())
         .filter(|p| {
             if let Some(ext) = p.extension() {
-                ext == "rpm" || ext == "spec"
+                ext == "rpm"
             } else {
                 false
             }
@@ -113,43 +112,21 @@ fn run_lint(path: &PathBuf, profile: LintProfile) -> Result<(), Box<dyn std::err
 }
 
 fn audit_file(path: &PathBuf, policy: &AuditPolicy) -> Result<String, String> {
-    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
     let data = fs::read(path).map_err(|e| format!("IO error: {}", e))?;
+    let _ = RpmLead::parse(&data).map_err(|e| format!("rpm-lead-parse-error: {}", e))?;
+    let security = ElfInspector::audit_bytes(&data).unwrap_or_default();
 
-    if ext == "rpm" {
-        let _ = RpmLead::parse(&data).map_err(|e| format!("rpm-lead-parse-error: {}", e))?;
-        let security = ElfInspector::audit_bytes(&data).unwrap_or_default();
-
-        if policy.enforce_elf_hardening && !security.nx {
-            return Err("executable-stack-detected: PT_GNU_STACK has PF_X enabled".to_string());
-        }
-
-        let cpio_info = match CpioArchive::parse_entries(&data) {
-            Ok(entries) => format!(" | CPIO Payload: {} files unpacked", entries.len()),
-            Err(_) => "".to_string(),
-        };
-
-        Ok(format!(
-            "Valid RPM package | Security (PIE: {}, RELRO: {}, NX: {}, StackCanary: {}){}",
-            security.pie, security.relro, security.nx, security.stack_canary, cpio_info
-        ))
-    } else if ext == "spec" {
-        let content = String::from_utf8_lossy(&data);
-        let macro_ctx = MacroContext::new();
-        let expanded = macro_ctx.expand(&content).map_err(|e| format!("macro-expansion-error: {}", e))?;
-
-        for line in expanded.lines() {
-            let trimmed = line.trim_start();
-            if trimmed.starts_with("License:") {
-                let lic = trimmed.split(':').nth(1).unwrap_or("").trim();
-                SpecParser::validate_license(lic)
-                    .map_err(|e| format!("invalid-spdx-license ('{}'): {}", lic, e))?;
-            }
-        }
-        let sections = SpecParser::parse_sections(&expanded);
-        let section_names: Vec<String> = sections.iter().map(|s| s.name.clone()).collect();
-        Ok(format!("Valid .spec syntax | Sections: [{}]", section_names.join(", ")))
-    } else {
-        Err("unsupported-file-extension".to_string())
+    if policy.enforce_elf_hardening && !security.nx {
+        return Err("executable-stack-detected: PT_GNU_STACK has PF_X enabled".to_string());
     }
+
+    let cpio_info = match CpioArchive::parse_entries(&data) {
+        Ok(entries) => format!(" | CPIO Payload: {} files unpacked", entries.len()),
+        Err(_) => "".to_string(),
+    };
+
+    Ok(format!(
+        "Valid RPM package | Security (PIE: {}, RELRO: {}, NX: {}, StackCanary: {}){}",
+        security.pie, security.relro, security.nx, security.stack_canary, cpio_info
+    ))
 }

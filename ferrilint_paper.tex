@@ -28,13 +28,13 @@
 \maketitle
 
 \begin{abstract}
-Traditional RPM package linting and static analysis tools rely heavily on Python wrappers, external C subprocesses (\texttt{librpm}), and separate binutils binaries (\texttt{readelf}, \texttt{objdump}). These legacy architectures introduce significant process-spawn overhead, memory safety concerns, and parsing latency. This paper introduces \textbf{ferrilint}, a modular, zero-FFI, pure-Rust static analysis engine designed for maximum throughput. By utilizing zero-copy byte-slice parsing for RPM headers and SVR4 CPIO payloads, native ELF64 security flag auditing (RELRO, PIE, NX, Stack Canaries), and multithreaded parallel execution via Rayon, \textbf{ferrilint} achieves audit speeds exceeding $1.1 \times 10^8$ operations per second with zero external runtime dependencies.
+Traditional RPM package linting and static analysis tools rely heavily on Python wrappers, external C subprocesses (\texttt{librpm}), and separate binutils binaries (\texttt{readelf}, \texttt{objdump}). These legacy architectures introduce significant process-spawn overhead, memory safety concerns, and parsing latency. This paper introduces \textbf{ferrilint}, a modular, zero-FFI, pure-Rust static analysis engine designed for maximum throughput. By utilizing zero-copy byte-slice parsing for RPM headers and SVR4 CPIO payloads, native ELF64 security flag auditing (RELRO, PIE, NX, Stack Canaries), deterministic CI profiles (\texttt{fedora-ci}, \texttt{strict}, \texttt{minimal}), and multithreaded parallel execution via Rayon, \textbf{ferrilint} achieves audit speeds exceeding $1.1 \times 10^8$ operations per second while eliminating false-positive friction.
 \end{abstract}
 
 \section{Introduction}
-Package management and distribution in enterprise Linux distributions (such as Fedora and Red Hat Enterprise Linux) rely on the RPM package format. Ensuring package compliance, metadata validity, and binary security hardening requires rigorous static analysis. 
+Package management and distribution in enterprise Linux distributions (such as Fedora and Red Hat Enterprise Linux) rely heavily on the RPM package format. Ensuring package compliance, metadata validity, and binary security hardening requires rigorous static analysis. 
 
-Historically, tools such as \texttt{rpmlint} have depended on Python interpreters coupled with bindings to C libraries (\texttt{librpm}). While flexible, this approach incurs substantial inter-process communication overhead, garbage collection pauses, and vulnerability vectors associated with memory-unsafe C bindings. \textbf{ferrilint} reimagines package linting entirely within a modern systems programming paradigm using Rust (edition 2024), guaranteeing memory safety, zero-copy performance, and fearless concurrency.
+Historically, tools such as \texttt{rpmlint} have depended on Python interpreters coupled with bindings to C libraries (\texttt{librpm}). While flexible, this approach incurs substantial inter-process communication overhead, garbage collection pauses, and vulnerability vectors associated with memory-unsafe C bindings. Furthermore, discrepancies between local linting and CI gating rules lead to unnecessary friction for maintainers. \textbf{ferrilint} reimagines package linting entirely within a modern systems programming paradigm using Rust (edition 2024), guaranteeing memory safety, zero-copy performance, and seamless CI profile compatibility.
 
 \section{Core Architecture & Crate Stack}
 The \textbf{ferrilint} workspace is structured into four distinct, highly optimized crates:
@@ -43,22 +43,18 @@ The \textbf{ferrilint} workspace is structured into four distinct, highly optimi
     \item \textbf{\texttt{rpm-parse-rs}}: Provides zero-copy parsing of 96-byte lead structures, signature headers, and SVR4 CPIO payloads using pure byte slices without invoking external tools.
     \item \textbf{\texttt{elf-inspect-rs}}: Implements native ELF64 inspection, parsing program headers (\texttt{PT_GNU_STACK}, \texttt{PT_GNU_RELRO}), and verifying hardening flags (\textbf{PIE}, \textbf{Full RELRO}, \textbf{NX}, and \textbf{Stack Canaries}) entirely in memory.
     \item \textbf{\texttt{spec-lex-rs}}: A high-performance spec file lexer, macro expander (supporting nested \texttt{\%define} and \texttt{\%global} rules), section segmenter, and SPDX license expression validator.
-    \item \textbf{\texttt{ferrilint-cli}}: A multithreaded parallel runner powered by Rayon that recursively discovers and audits targets with colorized output.
+    \item \textbf{\texttt{ferrilint-cli}}: A multithreaded parallel runner powered by Rayon featuring native CI profile filtering (\texttt{fedora-ci}, \texttt{strict}, \texttt{minimal}) and automatic ingestion of \texttt{rpmlint.toml} / \texttt{.rpmlintrc} suppression rules.
 \end{enumerate}
 
-\section{Zero-Copy Parsing & Security Auditing}
-Let $D$ represent the memory-mapped byte slice of an RPM binary or spec file. Parsing the lead structure is achieved in $O(1)$ time complexity:
+\section{Deterministic CI Profiles and Noise Reduction}
+To eliminate false-positive failures in automated CI pipelines (such as spelling or FHS warnings), \textbf{ferrilint} supports curated policy profiles. Let $P$ be the active audit policy and $D$ be a diagnostic warning. The filtering predicate is defined as:
 \begin{equation}
-T_{\text{lead}} = \mathcal{O}(1), \quad \text{where } |D| \ge 96 \text{ bytes}.
-\end{equation}
-
-For ELF binaries, security hardening compliance is verified by scanning program header table entries:
-\begin{equation}
-\text{Score}_{\text{hardening}} = \begin{cases} 
-1 & \text{if } \text{PIE} = \text{true} \land \text{RELRO} = \text{Full} \land \text{NX} = \text{true} \\ 
-0 & \text{otherwise}
+\text{Emit}(D) = \begin{cases} 
+\text{false} & \text{if } \exists r \in P_{\text{ignore}} \text{ s.t. } \text{Match}(r, D) \\ 
+\text{true} & \text{otherwise}
 \end{cases}
 \end{equation}
+Additionally, \textbf{ferrilint} natively parses existing \texttt{rpmlint.toml} filter tables and legacy `.rpmlintrc` \texttt{addFilter()} directives, ensuring zero configuration drift between local developer environments and Fedora CI gating pipelines.
 
 \section{Performance Evaluation}
 Benchmarks executed on Fedora 45 demonstrate exceptional throughput across 10,000 iterations:
@@ -69,6 +65,6 @@ Benchmarks executed on Fedora 45 demonstrate exceptional throughput across 10,00
 \end{itemize}
 
 \section{Conclusion}
-\textbf{ferrilint} establishes a new benchmark for package linting infrastructure. By eliminating FFI boundaries and leveraging Rayon parallelism, it delivers unmatched speed, reliability, and security for modern Linux packaging workflows.
+\textbf{ferrilint} establishes a new benchmark for package linting infrastructure. By eliminating FFI boundaries, integrating Rayon parallelism, and supporting deterministic CI profiles, it delivers unmatched speed, reliability, and developer experience for modern Linux packaging workflows.
 
 \end{document}

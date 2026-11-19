@@ -12,11 +12,15 @@ Source0:        %{url}/archive/refs/tags/%{name}-%{version}.tar.gz
 BuildRequires:  cargo
 BuildRequires:  rust
 BuildRequires:  rust-packaging >= 24
+BuildRequires:  crate(aho-corasick) >= 1.1
 BuildRequires:  crate(clap) >= 4.5
 BuildRequires:  crate(clap_derive) >= 4.5
 BuildRequires:  crate(clap_complete) >= 4.5
+BuildRequires:  crate(memchr) >= 2.0
 BuildRequires:  crate(rayon) >= 1.10
 BuildRequires:  crate(regex) >= 1.11
+BuildRequires:  crate(regex-automata) >= 0.4
+BuildRequires:  crate(regex-syntax) >= 0.8
 BuildRequires:  crate(spdx) >= 0.13
 BuildRequires:  crate(thiserror) >= 2.0
 BuildRequires:  crate(walkdir) >= 2.5

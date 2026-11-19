@@ -2,7 +2,6 @@ mod profile;
 
 use clap::{Parser, Subcommand, CommandFactory};
 use clap_complete::{generate, Shell};
-use anstream::println;
 use rayon::prelude::*;
 use std::fs;
 use std::path::PathBuf;

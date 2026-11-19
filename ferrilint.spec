@@ -12,7 +12,6 @@ Source0:        %{url}/archive/refs/tags/%{name}-%{version}.tar.gz
 BuildRequires:  cargo
 BuildRequires:  rust
 BuildRequires:  rust-packaging >= 24
-BuildRequires:  crate(anstream) >= 0.6
 BuildRequires:  crate(clap) >= 4.5
 BuildRequires:  crate(clap_complete) >= 4.5
 BuildRequires:  crate(rayon) >= 1.10

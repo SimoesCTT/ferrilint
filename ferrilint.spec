@@ -13,6 +13,7 @@ BuildRequires:  cargo
 BuildRequires:  rust
 BuildRequires:  rust-packaging >= 24
 BuildRequires:  crate(clap) >= 4.5
+BuildRequires:  crate(clap_derive) >= 4.5
 BuildRequires:  crate(clap_complete) >= 4.5
 BuildRequires:  crate(rayon) >= 1.10
 BuildRequires:  crate(regex) >= 1.11

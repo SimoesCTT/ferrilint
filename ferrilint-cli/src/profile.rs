@@ -1,6 +1,5 @@
 use clap::ValueEnum;
 use regex::Regex;
-use serde::Deserialize;
 use std::fs;
 use std::path::Path;
 
@@ -14,12 +13,6 @@ pub enum LintProfile {
     Minimal,
 }
 
-#[derive(Debug, Deserialize, Default)]
-struct RpmlintToml {
-    #[serde(rename = "Filters", default)]
-    filters: Vec<String>,
-}
-
 pub struct AuditPolicy {
     pub profile: LintProfile,
     pub enforce_elf_hardening: bool,
@@ -31,7 +24,6 @@ impl AuditPolicy {
         let enforce_elf_hardening = matches!(profile, LintProfile::FedoraCi | LintProfile::Strict);
         let mut ignore_patterns = Vec::new();
 
-        // Built-in Fedora CI noise suppressions (FHS / spelling false positives)
         if profile == LintProfile::FedoraCi {
             for pat in [
                 r"spelling-error",
@@ -44,25 +36,30 @@ impl AuditPolicy {
             }
         }
 
-        // Auto-discover rpmlint.toml in target directory or current working directory
         let search_root = if target_dir.is_file() {
             target_dir.parent().unwrap_or_else(|| Path::new("."))
         } else {
             target_dir
         };
 
+        // Native line-based parsing for rpmlint.toml Filters = ["..."]
         let toml_path = search_root.join("rpmlint.toml");
         if let Ok(content) = fs::read_to_string(&toml_path) {
-            if let Ok(parsed) = toml::from_str::<RpmlintToml>(&content) {
-                for pat in parsed.filters {
-                    if let Ok(re) = Regex::new(&pat) {
-                        ignore_patterns.push(re);
+            for line in content.lines() {
+                let trimmed = line.trim();
+                if trimmed.starts_with('"') || trimmed.starts_with('\'') {
+                    if let Some(pat) = trimmed.strip_prefix('"').and_then(|s| s.strip_suffix('"'))
+                        .or_else(|| trimmed.strip_prefix('\'').and_then(|s| s.strip_suffix('\''))) 
+                    {
+                        if let Ok(re) = Regex::new(pat) {
+                            ignore_patterns.push(re);
+                        }
                     }
                 }
             }
         }
 
-        // Auto-discover legacy .rpmlintrc addFilter("...") directives
+        // Native .rpmlintrc addFilter("...") parser
         let rc_path = search_root.join(".rpmlintrc");
         if let Ok(content) = fs::read_to_string(&rc_path) {
             if let Ok(extract_re) = Regex::new(r#"addFilter\(\s*["']([^"']+)["']\s*\)"#) {

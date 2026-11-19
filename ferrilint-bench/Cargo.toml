@@ -1,0 +1,12 @@
+[package]
+name = "ferrilint-bench"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+rpm-parse-rs = { path = "../rpm-parse-rs" }
+elf-inspect-rs = { path = "../elf-inspect-rs" }
+spec-lex-rs = { path = "../spec-lex-rs" }
+rayon.workspace = true

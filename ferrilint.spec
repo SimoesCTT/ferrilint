@@ -17,7 +17,9 @@ BuildRequires:  rustfmt
 %description
 A lightning-fast, drop-in static analysis engine and package inspection suite 
 for .spec files, source RPMs (.src.rpm), and binary RPMs (.rpm), built entirely 
-in pure Rust to eliminate Python overhead and legacy FHS false positives.
+in pure Rust to eliminate Python overhead and legacy FHS false positives. 
+Features built-in CI profiles (fedora-ci, strict, minimal) and native rpmlint.toml 
+filter compatibility.
 
 %prep
 %autosetup -n %{name}-%{version} -p1
@@ -36,4 +38,4 @@ install -D -p -m 0755 target/release/ferrilint-cli %{buildroot}%{_bindir}/ferril
 
 %changelog
 * Thu Nov 19 2026 A. Simões <simoesctt@github> - 0.1.0-1
-- Initial release of ferrilint native RPM linter suite
+- Initial release of ferrilint native RPM linter suite with CI profiles

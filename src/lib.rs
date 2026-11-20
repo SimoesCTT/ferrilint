@@ -7,3 +7,4 @@ pub use macro_ctx::{MacroContext, MacroError};
 pub use cpio::{CpioReader, CpioEntry, CpioError};
 pub use elf::{audit_elf, ElfAudit, ElfError, RelroStatus};
 pub use spec::{audit_spec, SpecAuditReport};
+pub mod rules;

@@ -1,0 +1,14 @@
+[policy]
+name = "fedora-strict-security"
+version = "1.0"
+
+[rules.elf_hardening]
+severity = "error"
+require_pie = true
+require_full_relro = true
+require_nx = true
+
+[rules.path_policies]
+severity = "warning"
+forbid_rpath = true
+forbidden_runpath_prefixes = ["/usr/local/lib", "/opt"]
